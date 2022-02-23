@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { MdAddShoppingCart } from 'react-icons/md';
 
 import { ProductList } from './styles';
@@ -26,18 +26,22 @@ const Home = (): JSX.Element => {
   const { addProduct, cart } = useCart();
 
   const cartItemsAmount = cart.reduce((sumAmount, product) => {
-    const newSumAmount = { ...sumAmount };
+    const newSumAmount = {...sumAmount}
     newSumAmount[product.id] = product.amount;
+
     return newSumAmount;
   }, {} as CartItemsAmount)
 
-  console.log(cartItemsAmount)
-
   useEffect(() => {
     async function loadProducts() {
-      const response = await api.get("/products")
+      const response = await api.get<Product[]>("/products")
 
-      setProducts(response.data)
+      const data = response.data.map(product => ({
+        ...product,
+        priceFormatted: formatPrice(product.price)
+      }))
+
+      setProducts(data)
     }
 
     loadProducts();
@@ -51,16 +55,11 @@ const Home = (): JSX.Element => {
     <ProductList>
       {products.map((product) => {
 
-        const price = new Intl.NumberFormat('pt-BR', { 
-          style: 'currency', 
-          currency: 'BRL' 
-        }).format(product.price)
-
         return(
-          <li>
+          <li key={product.id}>
             <img src={product.image} alt="Tênis de Caminhada Leve Confortável" />
             <strong>{product.title}</strong>
-            <span>{price}</span>
+            <span>{product.priceFormatted}</span>
             <button
               type="button"
               data-testid="add-product-button"
